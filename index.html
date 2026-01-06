@@ -7,7 +7,6 @@
 
 <style>
 *{box-sizing:border-box;}
-
 body{
     margin:0;
     height:100vh;
@@ -17,14 +16,12 @@ body{
     justify-content:center;
     align-items:center;
 }
-
 .wrapper{
     width:100%;
-    max-width:1100px;
+    max-width:1200px;
     display:flex;
     gap:25px;
 }
-
 .panel{
     flex:1;
     background:#ffffff;
@@ -32,23 +29,18 @@ body{
     border-radius:18px;
     box-shadow:0 20px 45px rgba(0,0,0,0.15);
 }
-
 h2{
-    margin-top:0;
-    margin-bottom:25px;
-    color:#1e293b;
     text-align:center;
+    color:#1e293b;
+    margin-bottom:20px;
 }
-
-.group{margin-bottom:18px;}
-
+.group{margin-bottom:16px;}
 label{
     font-size:14px;
     color:#475569;
-    margin-bottom:6px;
     display:block;
+    margin-bottom:6px;
 }
-
 input{
     width:100%;
     padding:12px;
@@ -56,77 +48,48 @@ input{
     border:1px solid #cbd5e1;
     font-size:15px;
     cursor:pointer;
-    transition:.25s;
 }
-
-input:hover{border-color:#2563eb;}
-input:focus{
-    outline:none;
-    border-color:#2563eb;
-    box-shadow:0 0 0 3px rgba(37,99,235,0.2);
-}
-
 .readonly{
     background:#f1f5f9;
     font-weight:600;
 }
-
+.summary{
+    background:#f8fafc;
+    padding:14px;
+    border-radius:10px;
+    font-size:14px;
+    margin-top:10px;
+}
 .result{
-    margin-top:15px;
+    margin-top:14px;
     padding:14px;
     background:#f8fafc;
     border-radius:10px;
     font-weight:600;
-    color:#0f172a;
 }
-
 .warning{
-    margin-top:15px;
+    margin-top:14px;
     padding:14px;
-    background:#fee2e2;
+    background:#fff7ed;
+    border-left:6px solid #f59e0b;
     border-radius:10px;
-    color:#991b1b;
+    color:#92400e;
     font-weight:700;
 }
-
 .consent-box{
-    margin-top:20px;
-    padding:16px;
-    border-radius:14px;
+    margin-top:18px;
+    padding:14px;
+    border-radius:12px;
     background:#f1f5f9;
     text-align:center;
 }
-
 .thumb-btn{
-    font-size:36px;
-    margin:0 20px;
+    font-size:34px;
+    margin:0 18px;
     cursor:pointer;
-    transition:.2s;
 }
-
-.thumb-btn:hover{transform:scale(1.2);}
-
 .thumb-up.active{color:#16a34a;}
 .thumb-down.active{color:#dc2626;}
-
-.consent-status{
-    margin-top:10px;
-    font-weight:700;
-}
-
-.reset{
-    margin-top:20px;
-    width:100%;
-    padding:12px;
-    background:#334155;
-    color:#fff;
-    border:none;
-    border-radius:12px;
-    font-size:15px;
-    cursor:pointer;
-}
-
-.reset:hover{background:#0f172a;}
 </style>
 </head>
 
@@ -149,13 +112,17 @@ input:focus{
 </div>
 
 <div class="group">
-<label>Interest Amount (18% p.a.)</label>
+<label>Total Interest</label>
 <input id="interest" class="readonly" readonly>
 </div>
 
 <div class="group">
 <label>LSA as on Date</label>
 <input id="lsaDate" class="readonly" readonly>
+</div>
+
+<div class="summary" id="interestSummary">
+Interest summary will appear here.
 </div>
 </div>
 
@@ -165,12 +132,12 @@ input:focus{
 
 <div class="group">
 <label>Enter Waiver %</label>
-<input type="number" id="waiverPct" step="0.01" oninput="fromWaiver()">
+<input type="number" id="waiverPct" step="0.01">
 </div>
 
 <div class="group">
-<label>OR Enter Settlement Amount</label>
-<input type="number" id="settleAmt" step="0.01" oninput="fromSettlement()">
+<label>OR Enter Settlement Amount (With Interest)</label>
+<input type="number" id="settleAmt" step="0.01">
 </div>
 
 <div class="result" id="resultText">
@@ -179,118 +146,145 @@ Settlement details will appear here.
 
 <div class="warning" id="warningText" style="display:none;"></div>
 
-<!-- Consent -->
 <div class="consent-box">
-<div>
 <span class="thumb-btn thumb-up" onclick="setConsent(true)">👍</span>
 <span class="thumb-btn thumb-down" onclick="setConsent(false)">👎</span>
-</div>
-<div class="consent-status" id="consentStatus">
-Customer response not recorded
-</div>
+<div id="consentStatus">Customer response not recorded</div>
 </div>
 
-<button class="reset" onclick="resetAll()">Reset</button>
 </div>
-
 </div>
 
 <script>
 let totalAmount=0, lsaWithInterest=0;
 
-document.querySelectorAll("#lsa,#saleDate").forEach(el=>{
-    el.addEventListener("input",calculateBase);
+/* Live recalculation */
+["lsa","saleDate","waiverPct","settleAmt"].forEach(id=>{
+    document.getElementById(id).addEventListener("input",recalculate);
 });
 
-function calculateBase(){
-    let lsaVal=+lsa.value||0;
-    let saleDt=new Date(saleDate.value);
-    if(!lsaVal || !saleDate.value) return;
-
-    let today=new Date();
-    if(saleDt>today) return;
-
-    let months =
-        (today.getFullYear()-saleDt.getFullYear())*12 +
-        (today.getMonth()-saleDt.getMonth());
-
-    if(today.getDate() < saleDt.getDate()) months--;
-    if(months<0) months=0;
-
-    totalAmount=lsaVal;
-    let interestAmt=totalAmount*0.18*(months/12);
-    lsaWithInterest=totalAmount+interestAmt;
-
-    interest.value=interestAmt.toFixed(2);
-    lsaDate.value=lsaWithInterest.toFixed(2);
-}
-
-function fromWaiver(){
-    settleAmt.value="";
-    let waiver=+waiverPct.value;
-    if(!waiver || !lsaWithInterest) return;
-
-    let recover=100-waiver;
-    let withInt=lsaWithInterest*(recover/100);
-    let withoutInt=totalAmount*(recover/100);
-
-    resultText.innerHTML=
-    `Settlement (With Interest): ₹${withInt.toFixed(2)}<br>
-     Settlement (Without Interest): ₹${withoutInt.toFixed(2)}`;
-
-    policyCheck(waiver);
-}
-
-function fromSettlement(){
-    waiverPct.value="";
-    let settle=+settleAmt.value;
-    if(!settle || !lsaWithInterest) return;
-
-    let waiver=100-(settle/lsaWithInterest)*100;
-
-    resultText.innerHTML=
-    `Calculated Waiver: ${waiver.toFixed(2)}%`;
-
-    policyCheck(waiver);
-}
-
-function policyCheck(waiver){
-    let saleYr=new Date(saleDate.value).getFullYear();
-    let max=saleYr>2020?70:74;
-
-    if(waiver>max){
-        warningText.style.display="block";
-        warningText.innerHTML=
-        `⚠️ Waiver exceeds policy limit (${max}%).<br>
-         Manager consent is mandatory.`;
-    }else{
+function recalculate(){
+    calculateInterest();
+    if(waiverPct.value){
+        applyWaiver();
+    } else if(settleAmt.value){
+        applySettlement();
+    } else {
+        resultText.innerHTML="Settlement details will appear here.";
         warningText.style.display="none";
     }
 }
 
+/* Interest calculation */
+function calculateInterest(){
+    let lsaVal = +lsa.value || 0;
+    let saleDt = new Date(saleDate.value);
+    if(!lsaVal || !saleDate.value) return;
+
+    let today = new Date();
+    if(saleDt > today) return;
+
+    let months =
+        (today.getFullYear() - saleDt.getFullYear()) * 12 +
+        (today.getMonth() - saleDt.getMonth());
+
+    if(today.getDate() < saleDt.getDate()) months--;
+    if(months < 0) months = 0;
+
+    let interestPerYear = lsaVal * 0.18;
+    let totalInterest = interestPerYear * (months / 12);
+
+    totalAmount = lsaVal;
+    lsaWithInterest = lsaVal + totalInterest;
+
+    interest.value = totalInterest.toFixed(2);
+    lsaDate.value = lsaWithInterest.toFixed(2);
+
+    let durationText;
+    if(months < 12){
+        durationText = `${months} months`;
+    } else {
+        let y = Math.floor(months / 12);
+        let m = months % 12;
+        durationText = m === 0 ? `${y} years` : `${y} years ${m} months`;
+    }
+
+    interestSummary.innerHTML = `
+        <b>Interest Rate:</b> 18% p.a.<br>
+        <b>Interest per Year:</b> ₹${interestPerYear.toFixed(2)}<br>
+        <b>Duration:</b> ${durationText}
+    `;
+}
+
+/* Waiver based */
+function applyWaiver(){
+    settleAmt.value="";
+    let waiver = +waiverPct.value;
+    if(!waiver) return;
+
+    let recover = 100 - waiver;
+    let withInt = lsaWithInterest * (recover/100);
+    let withoutInt = totalAmount * (recover/100);
+
+    resultText.innerHTML = `
+        Settlement (With Interest): ₹${withInt.toFixed(2)}<br>
+        Settlement (Without Interest): ₹${withoutInt.toFixed(2)}
+    `;
+
+    policyCheck(waiver);
+}
+
+/* Settlement based */
+function applySettlement(){
+    waiverPct.value="";
+    let settle = +settleAmt.value;
+    if(!settle || !lsaWithInterest) return;
+
+    let waiver = 100 - (settle/lsaWithInterest)*100;
+    let withoutInt = totalAmount * ((100-waiver)/100);
+
+    resultText.innerHTML = `
+        Calculated Waiver: ${waiver.toFixed(2)}%<br>
+        Settlement (Without Interest): ₹${withoutInt.toFixed(2)}
+    `;
+
+    policyCheck(waiver);
+}
+
+/* Policy check */
+function policyCheck(waiver){
+    let saleYr = new Date(saleDate.value).getFullYear();
+    let max = saleYr > 2020 ? 70 : 74;
+
+    if(waiver > max){
+        let allowedWith = lsaWithInterest * ((100-max)/100);
+        let allowedWithout = totalAmount * ((100-max)/100);
+
+        warningText.style.display="block";
+        warningText.innerHTML = `
+            ⚠️ Manager approval required.<br>
+            Max offer (With Interest): ₹${allowedWith.toFixed(2)}<br>
+            Max offer (Without Interest): ₹${allowedWithout.toFixed(2)}
+        `;
+    } else {
+        warningText.style.display="none";
+    }
+}
+
+/* Consent */
 function setConsent(agreed){
     document.querySelector(".thumb-up").classList.remove("active");
     document.querySelector(".thumb-down").classList.remove("active");
 
     if(agreed){
         document.querySelector(".thumb-up").classList.add("active");
-        consentStatus.innerHTML="Customer agreed to the settlement";
+        consentStatus.innerHTML="Customer agreed";
         consentStatus.style.color="#16a34a";
-    }else{
+    } else {
         document.querySelector(".thumb-down").classList.add("active");
-        consentStatus.innerHTML="Customer did not agree to the settlement";
+        consentStatus.innerHTML="Customer not agreed";
         consentStatus.style.color="#dc2626";
     }
-}
-
-function resetAll(){
-    document.querySelectorAll("input").forEach(i=>i.value="");
-    resultText.innerHTML="Settlement details will appear here.";
-    warningText.style.display="none";
-    consentStatus.innerHTML="Customer response not recorded";
-    consentStatus.style.color="#0f172a";
-    document.querySelector(".thumb-up").classList.remove("active");
-    document.querySelector(".thumb-down").classList.remove("active");
 }
 </script>
 
