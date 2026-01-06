@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSA Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 50px;
+            background-image: url('https://dtlive.s3.ap-south-1.amazonaws.com/16109/DT_G33_Finance-Animated-GIF-Icon-pack-1.gif');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 600px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .header img {
+            max-height: 60px;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1200px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .calculator, .waiver-section {
+            width: 48%;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 2px 2px 12px #aaa;
+            margin-bottom: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+        .calculator h2, .waiver-section h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .row label {
+            width: 48%;
+        }
+        .row input {
+            width: 48%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .row input[readonly] {
+            background-color: #f0f0f0;
+        }
+        .hidden {
+            display: none;
+        }
+        button {
+            width: 100%;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .waiver-result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .waiver-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        .waiver-table th, .waiver-table td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        .waiver-table button {
+            width: 100%;
+            padding: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .waiver-table button:hover {
+            background-color: #0056b3;
+        }
+        .approval-message {
+            margin-top: 10px;
+            font-size: 1.1em;
+            text-align: center;
+            color: red;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            font-size: 1.5em;
+            text-align: center;
+            border-radius: 10px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <img src="https://www.goalcryst.com/assets/images/logo.png" alt="Company Logo" id="company-logo">
+        <img src="https://tmfmw.tmf.co.in/cmsdata/2022-12/logo.webp" alt="Client Logo" id="client-logo">
+    </div>
+
+    <div class="container">
+        <div class="calculator">
+            <h2>LSA Calculator</h2>
+            
+            <!-- Input Fields -->
+            <div class="row">
+                <label for="lsa-amount">LSA Amount:</label>
+                <input type="number" id="lsa-amount" name="lsa-amount" placeholder="Enter LSA amount">
+            </div>
+            <div class="row">
+                <label for="od-amount">OD Amount:</label>
+                <input type="number" id="od-amount" name="od-amount" placeholder="Enter OD amount">
+            </div>
+            <div class="row">
+                <label for="expenses">Expenses:</label>
+                <input type="number" id="expenses" name="expenses" placeholder="Enter expenses">
+            </div>
+            <div class="row">
+                <label for="sale-date">Sale Date (Year):</label>
+                <input type="number" id="sale-date" name="sale-date" placeholder="Enter sale date year">
+            </div>
+
+            <!-- Calculation Button -->
+            <button onclick="calculateInterest()">Calculate</button>
+
+            <!-- Hidden Result Fields -->
+            <div class="row hidden" id="total-amount-row">
+                <label for="total-amount">Total Amount:</label>
+                <input type="number" id="total-amount" name="total-amount" readonly>
+            </div>
+            <div class="row hidden" id="current-year-row">
+                <label for="current-year">Current Year:</label>
+                <input type="number" id="current-year" name="current-year" readonly>
+            </div>
+            <div class="row hidden" id="year-gap-row">
+                <label for="year-gap">Year Gap:</label>
+                <input type="number" id="year-gap" name="year-gap" readonly>
+            </div>
+            <div class="row hidden" id="interest-per-year-row">
+                <label for="interest-per-year">Interest per Year:</label>
+                <input type="number" id="interest-per-year" name="interest-per-year" readonly>
+            </div>
+            <div class="row hidden" id="interest-amount-row">
+                <label for="interest-amount">Interest Amount:</label>
+                <input type="number" id="interest-amount" name="interest-amount" readonly>
+            </div>
+            <div class="row hidden" id="lsa-as-on-date-row">
+                <label for="lsa-as-on-date">LSA as on Date:</label>
+                <input type="number" id="lsa-as-on-date" name="lsa-as-on-date" readonly>
+            </div>
+        </div>
+
+        <div class="waiver-section">
+            <h2>Waiver Calculation</h2>
+            <div class="waiver-result hidden" id="waiver-result">
+                <table class="waiver-table">
+                    <thead>
+                        <tr>
+                            <th>Recover %</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody id="waiver-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p id="modal-text"></p>
+        </div>
+    </div>
+
+    <script>
+        // Get the current year and set it as the default value for the current year field
+        document.getElementById('current-year').value = new Date().getFullYear();
+
+        function calculateInterest() {
+            // Get input values
+            let lsaAmount = parseFloat(document.getElementById('lsa-amount').value) || 0;
+            let odAmount = parseFloat(document.getElementById('od-amount').value) || 0;
+            let expenses = parseFloat(document.getElementById('expenses').value) || 0;
+            let currentYear = parseInt(document.getElementById('current-year').value);
+            let saleDate = parseInt(document.getElementById('sale-date').value);
+
+            // Total Amount Calculation
+            let totalAmount = lsaAmount + odAmount + expenses;
+            document.getElementById('total-amount').value = totalAmount;
+            document.getElementById('total-amount-row').classList.remove('hidden');
+
+            // Year Gap Calculation
+            let yearGap = currentYear - saleDate;
+            document.getElementById('year-gap').value = yearGap;
+            document.getElementById('year-gap-row').classList.remove('hidden');
+
+            // Interest per Year Calculation
+            let interestPerYear = totalAmount * 0.18;
+            document.getElementById('interest-per-year').value = interestPerYear;
+            document.getElementById('interest-per-year-row').classList.remove('hidden');
+
+            // Interest Amount Calculation
+            let interestAmount = interestPerYear * yearGap;
+            document.getElementById('interest-amount').value = interestAmount;
+            document.getElementById('interest-amount-row').classList.remove('hidden');
+
+            // LSA As on Date Calculation
+            let lsaAsOnDate = totalAmount + interestAmount;
+            document.getElementById('lsa-as-on-date').value = lsaAsOnDate;
+            document.getElementById('lsa-as-on-date-row').classList.remove('hidden');
+
+            // Calculate and Display Waiver Amounts
+            calculateWaiver(lsaAsOnDate);
+        }
+
+        function calculateWaiver(lsaAsOnDate) {
+            const percentages = [95, 90, 85, 75, 70, 65, 60, 55, 50, 45, 40, 35];
+            const waiverTableBody = document.getElementById('waiver-table-body');
+            waiverTableBody.innerHTML = ''; // Clear any existing rows
+
+            percentages.forEach(percentage => {
+                let waiverAmount = lsaAsOnDate * (percentage / 100);
+                let row = document.createElement('tr');
+
+                let percentageCell = document.createElement('td');
+                percentageCell.innerText = `${percentage}%`;
+                row.appendChild(percentageCell);
+
+                let resultCell = document.createElement('td');
+                let button = document.createElement('button');
+                button.innerText = waiverAmount.toFixed(2);
+                button.onclick = function() {
+                    showModal(`${100 - percentage}% waiver given on LSA as on date`);
+                };
+                resultCell.appendChild(button);
+                row.appendChild(resultCell);
+
+                waiverTableBody.appendChild(row);
+            });
+
+            document.getElementById('waiver-result').classList.remove('hidden');
+        }
+
+        function showModal(message) {
+            document.getElementById('modal-text').innerText = message;
+            document.getElementById('myModal').style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById('myModal').style.display = "none";
+        }
+
+        // Close the modal when the user clicks anywhere outside of it
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('myModal')) {
+                document.getElementById('myModal').style.display = "none";
+            }
+        }
+    </script>
+
+</body>
+</html>
