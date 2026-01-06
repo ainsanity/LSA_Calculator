@@ -8,86 +8,43 @@
 <style>
 *{box-sizing:border-box;}
 body{
-    margin:0;
-    height:100vh;
+    margin:0;height:100vh;
     font-family:"Segoe UI", Arial, sans-serif;
     background:linear-gradient(135deg,#c7d2fe,#e0f2fe);
-    display:flex;
-    justify-content:center;
-    align-items:center;
+    display:flex;justify-content:center;align-items:center;
 }
 .wrapper{
-    width:100%;
-    max-width:1200px;
-    display:flex;
-    gap:25px;
+    width:100%;max-width:1200px;
+    display:flex;gap:25px;
 }
 .panel{
-    flex:1;
-    background:#ffffff;
-    padding:30px;
-    border-radius:18px;
+    flex:1;background:#fff;
+    padding:30px;border-radius:18px;
     box-shadow:0 20px 45px rgba(0,0,0,0.15);
 }
-h2{
-    text-align:center;
-    color:#1e293b;
-    margin-bottom:20px;
-}
+h2{text-align:center;color:#1e293b;margin-bottom:20px;}
 .group{margin-bottom:16px;}
-label{
-    font-size:14px;
-    color:#475569;
-    display:block;
-    margin-bottom:6px;
-}
+label{font-size:14px;color:#475569;display:block;margin-bottom:6px;}
 input{
-    width:100%;
-    padding:12px;
-    border-radius:10px;
-    border:1px solid #cbd5e1;
-    font-size:15px;
-    cursor:pointer;
+    width:100%;padding:12px;
+    border-radius:10px;border:1px solid #cbd5e1;
+    font-size:15px;cursor:pointer;
 }
-.readonly{
-    background:#f1f5f9;
-    font-weight:600;
-}
-.summary{
-    background:#f8fafc;
-    padding:14px;
-    border-radius:10px;
-    font-size:14px;
-    margin-top:10px;
-}
-.result{
-    margin-top:14px;
-    padding:14px;
-    background:#f8fafc;
-    border-radius:10px;
-    font-weight:600;
+.readonly{background:#f1f5f9;font-weight:600;}
+.summary,.result{
+    background:#f8fafc;padding:14px;border-radius:10px;
+    font-size:14px;margin-top:10px;font-weight:600;
 }
 .warning{
-    margin-top:14px;
-    padding:14px;
-    background:#fff7ed;
-    border-left:6px solid #f59e0b;
-    border-radius:10px;
-    color:#92400e;
-    font-weight:700;
+    margin-top:14px;padding:14px;
+    background:#fff7ed;border-left:6px solid #f59e0b;
+    border-radius:10px;color:#92400e;font-weight:700;
 }
 .consent-box{
-    margin-top:18px;
-    padding:14px;
-    border-radius:12px;
-    background:#f1f5f9;
-    text-align:center;
+    margin-top:18px;padding:14px;
+    border-radius:12px;background:#f1f5f9;text-align:center;
 }
-.thumb-btn{
-    font-size:34px;
-    margin:0 18px;
-    cursor:pointer;
-}
+.thumb-btn{font-size:34px;margin:0 18px;cursor:pointer;}
 .thumb-up.active{color:#16a34a;}
 .thumb-down.active{color:#dc2626;}
 </style>
@@ -97,7 +54,7 @@ input{
 
 <div class="wrapper">
 
-<!-- LEFT PANEL -->
+<!-- LEFT -->
 <div class="panel">
 <h2>LSA & Interest</h2>
 
@@ -126,7 +83,7 @@ Interest summary will appear here.
 </div>
 </div>
 
-<!-- RIGHT PANEL -->
+<!-- RIGHT -->
 <div class="panel">
 <h2>Waiver / Settlement</h2>
 
@@ -158,7 +115,6 @@ Settlement details will appear here.
 <script>
 let totalAmount=0, lsaWithInterest=0;
 
-/* Live recalculation */
 ["lsa","saleDate","waiverPct","settleAmt"].forEach(id=>{
     document.getElementById(id).addEventListener("input",recalculate);
 });
@@ -177,56 +133,50 @@ function recalculate(){
 
 /* Interest calculation */
 function calculateInterest(){
-    let lsaVal = +lsa.value || 0;
-    let saleDt = new Date(saleDate.value);
-    if(!lsaVal || !saleDate.value) return;
+    let lsaVal=+lsa.value||0;
+    let saleDt=new Date(saleDate.value);
+    if(!lsaVal||!saleDate.value) return;
 
-    let today = new Date();
-    if(saleDt > today) return;
+    let today=new Date();
+    let months=(today.getFullYear()-saleDt.getFullYear())*12+(today.getMonth()-saleDt.getMonth());
+    if(today.getDate()<saleDt.getDate()) months--;
+    if(months<0) months=0;
 
-    let months =
-        (today.getFullYear() - saleDt.getFullYear()) * 12 +
-        (today.getMonth() - saleDt.getMonth());
+    let interestPerYear=lsaVal*0.18;
+    let totalInterest=interestPerYear*(months/12);
 
-    if(today.getDate() < saleDt.getDate()) months--;
-    if(months < 0) months = 0;
+    totalAmount=lsaVal;
+    lsaWithInterest=lsaVal+totalInterest;
 
-    let interestPerYear = lsaVal * 0.18;
-    let totalInterest = interestPerYear * (months / 12);
-
-    totalAmount = lsaVal;
-    lsaWithInterest = lsaVal + totalInterest;
-
-    interest.value = totalInterest.toFixed(2);
-    lsaDate.value = lsaWithInterest.toFixed(2);
+    interest.value=totalInterest.toFixed(2);
+    lsaDate.value=lsaWithInterest.toFixed(2);
 
     let durationText;
-    if(months < 12){
-        durationText = `${months} months`;
+    if(months<12){
+        durationText=`${months} months`;
     } else {
-        let y = Math.floor(months / 12);
-        let m = months % 12;
-        durationText = m === 0 ? `${y} years` : `${y} years ${m} months`;
+        let y=Math.floor(months/12), m=months%12;
+        durationText=m===0?`${y} years`:`${y} years ${m} months`;
     }
 
-    interestSummary.innerHTML = `
+    interestSummary.innerHTML=`
         <b>Interest Rate:</b> 18% p.a.<br>
         <b>Interest per Year:</b> ₹${interestPerYear.toFixed(2)}<br>
         <b>Duration:</b> ${durationText}
     `;
 }
 
-/* Waiver based */
+/* Waiver entry */
 function applyWaiver(){
     settleAmt.value="";
-    let waiver = +waiverPct.value;
+    let waiver=+waiverPct.value;
     if(!waiver) return;
 
-    let recover = 100 - waiver;
-    let withInt = lsaWithInterest * (recover/100);
-    let withoutInt = totalAmount * (recover/100);
+    let recover=100-waiver;
+    let withInt=lsaWithInterest*(recover/100);
+    let withoutInt=totalAmount*(recover/100);
 
-    resultText.innerHTML = `
+    resultText.innerHTML=`
         Settlement (With Interest): ₹${withInt.toFixed(2)}<br>
         Settlement (Without Interest): ₹${withoutInt.toFixed(2)}
     `;
@@ -234,38 +184,40 @@ function applyWaiver(){
     policyCheck(waiver);
 }
 
-/* Settlement based */
+/* Settlement entry */
 function applySettlement(){
     waiverPct.value="";
-    let settle = +settleAmt.value;
-    if(!settle || !lsaWithInterest) return;
+    let settle=+settleAmt.value;
+    if(!settle||!lsaWithInterest) return;
 
-    let waiver = 100 - (settle/lsaWithInterest)*100;
-    let withoutInt = totalAmount * ((100-waiver)/100);
+    let waiverWith = 100 - (settle/lsaWithInterest)*100;
+    let waiverWithout = 100 - (settle/totalAmount)*100;
 
-    resultText.innerHTML = `
-        Calculated Waiver: ${waiver.toFixed(2)}%<br>
-        Settlement (Without Interest): ₹${withoutInt.toFixed(2)}
+    let saleYr=new Date(saleDate.value).getFullYear();
+    let max=saleYr>2020?70:74;
+
+    let limitWith=lsaWithInterest*((100-max)/100);
+    let limitWithout=totalAmount*((100-max)/100);
+
+    resultText.innerHTML=`
+        <b>Waiver % (With Interest):</b> ${waiverWith.toFixed(2)}%<br>
+        <b>Waiver % (Without Interest):</b> ${waiverWithout.toFixed(2)}%<br><br>
+        <b>Manager Approval Limit:</b><br>
+        With Interest → ₹${limitWith.toFixed(2)}<br>
+        Without Interest → ₹${limitWithout.toFixed(2)}
     `;
 
-    policyCheck(waiver);
+    policyCheck(waiverWith);
 }
 
-/* Policy check */
+/* Policy */
 function policyCheck(waiver){
-    let saleYr = new Date(saleDate.value).getFullYear();
-    let max = saleYr > 2020 ? 70 : 74;
+    let saleYr=new Date(saleDate.value).getFullYear();
+    let max=saleYr>2020?70:74;
 
-    if(waiver > max){
-        let allowedWith = lsaWithInterest * ((100-max)/100);
-        let allowedWithout = totalAmount * ((100-max)/100);
-
+    if(waiver>max){
         warningText.style.display="block";
-        warningText.innerHTML = `
-            ⚠️ Manager approval required.<br>
-            Max offer (With Interest): ₹${allowedWith.toFixed(2)}<br>
-            Max offer (Without Interest): ₹${allowedWithout.toFixed(2)}
-        `;
+        warningText.innerHTML="⚠️ Manager approval required.";
     } else {
         warningText.style.display="none";
     }
